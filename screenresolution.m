@@ -10,12 +10,30 @@
      * Version History: 
      *    2011-06-01: add -a option. 
      *    2011-06-08: Display adding flags and not display duplicate modes. 
-     *    2011-06-09: Adding set the best fit resolution function. 
+     *    2011-06-09: Adding set the best fit resolution function.
+     *    2013-07-16: minor error fix.
      * 
      * COMPILE: 
-     *    c++ screenresolution.m -framework ApplicationServices -o screenresolution -arch i386 
+     *    clang screenresolution.m -framework ApplicationServices -o screenresolution -arch i386 
      * 
-     */  
+     * 
+     * screenresolution: set/get current Online display resolutions
+     * Copyright (C) 2011  Tony Liu
+
+     * This program is free software: you can redistribute it and/or modify
+     * it under the terms of the GNU General Public License as published by
+     * the Free Software Foundation, either version 3 of the License, or
+     * (at your option) any later version.
+
+     * This program is distributed in the hope that it will be useful,
+     * but WITHOUT ANY WARRANTY; without even the implied warranty of
+     * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     * GNU General Public License for more details.
+
+     * You should have received a copy of the GNU General Public License
+     * along with this program.  If not, see <http://www.gnu.org/licenses/>
+     */
+       
     #include <ApplicationServices/ApplicationServices.h>  
     struct sLIST {  
         double width, height;  
@@ -29,7 +47,8 @@
     int GetModeParms (CGDisplayModeRef mode, double *width, double *height, double *depth, double *freq, int *flag);  
     int GetDisplayParms(CGDirectDisplayID disp, double *width, double *height, double *depth, double *freq, int *flag);  
     bool GetBestDisplayMod(CGDirectDisplayID display, double dwidth, double dheight);  
-    int modecompare(struct sLIST *elem1, struct sLIST *elem2);  
+    int modecompare(struct sLIST *elem1, struct sLIST *elem2);
+    
     uint32_t maxDisplays = 20;  
     CGDirectDisplayID onlineDisplayIDs[20];  
     uint32_t displayTotal;  
@@ -46,13 +65,13 @@
         // 1. Getting system info.  
         if (CGGetOnlineDisplayList (maxDisplays, onlineDisplayIDs, &displayTotal) != kCGErrorSuccess) {  
             printf("Error on getting online display List.");  
-            return -1;  
-        }  
-          
-        if (argc == 1) {  
-            CGRect screenFrame = CGDisplayBounds(kCGDirectMainDisplay);  
-            CGSize screenSize  = screenFrame.size;  
-            printf("%.0f %.0f\n", screenSize.width, screenSize.height);  
+            return -1;
+        }
+ 
+        if (argc == 1) {
+            CGRect screenFrame = CGDisplayBounds(kCGDirectMainDisplay);
+            CGSize screenSize  = screenFrame.size;
+            printf("%.0f %.0f\n", screenSize.width, screenSize.height);
             return 0;  
         }  
           
@@ -115,10 +134,11 @@
         for (i = 0 ; i < displayTotal ;  i++ ) {  
             printf ("  Display %d (id %d): ", i+1, onlineDisplayIDs[i]);  
             GetDisplayParms(onlineDisplayIDs[i], &width, &height, &depth, &freq, &flag);  
-            if ( i = 0 )    printf(" (main) ");  
+            if ( i == 0 ) printf(" (main) ");  
             PrintModeParms (width, height, depth, freq, flag);  
         }  
-    }  
+    }
+    
     void ListDisplayAllMode (CGDirectDisplayID displayID, int iNum)  
     {  
         CFArrayRef modeList;  
@@ -147,11 +167,13 @@
             PrintModeParms (width, height, depth, freq, flag);  
         }  
         CFRelease(modeList);  
-    }  
+    }
+    
     void PrintModeParms (double width, double height, double depth, double freq, int flag)  
     {  
         printf ("%ld x %ld x %ld @ %ld Hz, <%d>\n", (long int)width, (long int)height, (long int)depth, (long int)freq, flag);  
-    }  
+    }
+    
     int GetDisplayParms(CGDirectDisplayID disp, double *width, double *height, double *depth, double *freq, int *flag)  
     {  
         int iReturn=0;  
@@ -159,7 +181,8 @@
         iReturn = GetModeParms (Mode, width, height, depth, freq, flag);  
         CGDisplayModeRelease (Mode);  
         return iReturn;  
-    }  
+    }
+    
     int GetModeParms (CGDisplayModeRef Mode, double *width, double *height, double *depth, double *freq, int *sflag)  
     {  
         *width = CGDisplayModeGetWidth (Mode);  
@@ -167,17 +190,18 @@
         *freq = CGDisplayModeGetRefreshRate (Mode);  
         CFStringRef pixelEncoding = CGDisplayModeCopyPixelEncoding (Mode);  
         *depth = 0;  
-        if (pixelEncoding = NULL) return -1;  
-        if (pixelEncoding = CFSTR(IO32BitDirectPixels))  
+        if (pixelEncoding == NULL) return -1;  
+        if (pixelEncoding == CFSTR(IO32BitDirectPixels))  
             *depth = 32;  
-        else if (pixelEncoding = CFSTR(IO16BitDirectPixels))  
+        else if (pixelEncoding == CFSTR(IO16BitDirectPixels))  
             *depth = 16;  
         else    *depth = 8;  
           
         *sflag = CGDisplayModeGetIOFlags(Mode);  
         CFRelease(pixelEncoding);  
         return 0;  
-    }  
+    }
+    
     bool GetBestDisplayMod(CGDirectDisplayID display, double dwidth, double dheight)  
     {  
         CFArrayRef modeList;  
@@ -190,7 +214,7 @@
         int ireturn=0;  
        
         modeList = CGDisplayCopyAllDisplayModes (display, NULL);  
-        if (modeList == NULL)   return;  
+        if (modeList == NULL)   return 1;  
         count = CFArrayGetCount (modeList);  
         scount=0;  
         for (index = 0; index < count; index++)  
@@ -227,7 +251,8 @@
         else ireturn = -1;  
         CFRelease(modeList);  
         return ireturn;  
-    }  
+    }
+    
     int modecompare(struct sLIST *elem1, struct sLIST *elem2)  
     {  
        if ( elem1->width < elem2->width)  
@@ -236,7 +261,8 @@
        if (elem1->height < elem2->height) return -1;  
        else if (elem1->height > elem2->height) return 1;  
        else return 0;  
-    }  
+    }
+
     void PrintUsage(const char *argv[])  
     {  
         char *fname = strrchr(argv[0], '/')+1;  
