@@ -13,7 +13,8 @@ Complie in terminal:
 c++ screenresolution.m -framework ApplicationServices -o screenresolution -arch i386
 
 
+---
 Thanks to the community for using/reporting issues/making suggestions for features!
 
-Tony Liu
-Sept 2012
+Tony
+July 2013
