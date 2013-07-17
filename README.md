@@ -17,5 +17,4 @@ c++ screenresolution.m -framework ApplicationServices -o screenresolution -arch 
 Thanks to the community for using/reporting issues/making suggestions for features!
 
 
-Tony
-July 2013
+Tony, July 2013
